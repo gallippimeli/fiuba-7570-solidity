@@ -1,30 +1,42 @@
-pragma solidity ^0.4.18;
+pragma solidity ^0.5.8;
 
 library SafeMath {
-  function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-    if (a == 0) {
-      return 0;
+
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
+        require(c >= a, "SafeMath: addition overflow");
+
+        return c;
     }
-    uint256 c = a * b;
-    assert(c / a == b);
-    return c;
-  }
 
-  function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    // assert(b > 0); // Solidity automatically throws when dividing by 0
-    uint256 c = a / b;
-    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
-    return c;
-  }
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+        require(b <= a, "SafeMath: subtraction overflow");
+        uint256 c = a - b;
 
-  function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b <= a);
-    return a - b;
-  }
+        return c;
+    }
 
-  function add(uint256 a, uint256 b) internal pure returns (uint256) {
-    uint256 c = a + b;
-    assert(c >= a);
-    return c;
-  }
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+        if (a == 0) {
+            return 0;
+        }
+
+        uint256 c = a * b;
+        require(c / a == b, "SafeMath: multiplication overflow");
+
+        return c;
+    }
+
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+        // Solidity only automatically asserts when dividing by 0
+        require(b > 0, "SafeMath: division by zero");
+        uint256 c = a / b;
+
+        return c;
+    }
+
+    function mod(uint256 a, uint256 b) internal pure returns (uint256) {
+        require(b != 0, "SafeMath: modulo by zero");
+        return a % b;
+    }
 }
