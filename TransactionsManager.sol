@@ -25,7 +25,7 @@ contract TransactionsManager {
 
     Transaction[] lastTransactions;
 
-    address[] futureSenders;
+    address payable[] futureSenders;
 
     mapping (address => FutureTransaction[]) futureTransactions;
 
@@ -126,13 +126,13 @@ contract TransactionsManager {
         return senderFutureTransactions;
     }
 
-    function executeContractsBySender(address sender) internal {
+    function executeContractsBySender(address payable sender) internal {
         delete notReadyTransactions;
         FutureTransaction[] memory futureTransactionsBySender = getFutureTransactionsBySender(sender);
         for (uint index = 0; index < futureTransactionsBySender.length; index++) {
             FutureTransaction memory futureTransaction = futureTransactionsBySender[index];
             if (futureTransaction.isReady) {
-                //TO DO: Ejecutar contrato
+                sender.transfer(futureTransaction.amount);
             } else {
                 notReadyTransactions.push(futureTransaction);
             }
