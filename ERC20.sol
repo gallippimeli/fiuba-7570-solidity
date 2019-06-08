@@ -12,11 +12,11 @@ contract ERC20 is IERC20, TransactionsManager {
     /**
      * Public variables
      */
-    string public symbol;
+    string public symbol = "LEM";
 
-    string public name;
+    string public name = "LEMA";
 
-    uint8 public decimals;
+    uint8 public decimals = 18;
 
     /**
      * Private variables
@@ -25,9 +25,9 @@ contract ERC20 is IERC20, TransactionsManager {
 
     mapping (address => mapping (address => uint256)) private _allowances;
 
-    uint256 private _totalSupply;
+    uint256 private _totalSupply = 2000;
 
-    uint private _price;
+    uint private _price = 100;
 
     /**
      * Implemented IERC20 functions
@@ -82,8 +82,9 @@ contract ERC20 is IERC20, TransactionsManager {
             'No puedes vender monedas'
         );
         uint amountEther = amount.mul(_price).div(10**uint(decimals));
-        msg.sender.transfer(amountEther);
+        //msg.sender.transfer(amountEther);
         _decreasePrice();
+        _balances[msg.sender] -= amount;
         addTransaction(_price);
     }
 
@@ -94,7 +95,9 @@ contract ERC20 is IERC20, TransactionsManager {
         require(sender != address(0), "ERC20: transfer from the zero address");
         require(recipient != address(0), "ERC20: transfer to the zero address");
 
-        _balances[sender] = _balances[sender].sub(amount);
+        if(sender != msg.sender){
+            _balances[sender] = _balances[sender].sub(amount);
+        }
         _balances[recipient] = _balances[recipient].add(amount);
         emit Transfer(sender, recipient, amount);
     }
