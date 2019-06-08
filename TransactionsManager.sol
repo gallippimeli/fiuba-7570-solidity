@@ -17,6 +17,7 @@ contract TransactionsManager {
         uint amount;
         uint date;
         bool isReady;
+        address payable owner;
     }
 
     uint m = 0;
@@ -25,13 +26,11 @@ contract TransactionsManager {
 
     Transaction[] lastTransactions;
 
-    address payable[] futureSenders;
+    FutureTransaction[] public futures;
 
-    mapping (address => FutureTransaction[]) futureTransactions;
+    uint[] futuresIndexToDelete;
 
-    FutureTransaction[] allFutureTransactions;
-
-    FutureTransaction[] notReadyTransactions;
+    FutureTransaction[] senderFutureTransactions;
 
     constructor() public {
         m = 0;
@@ -76,26 +75,15 @@ contract TransactionsManager {
             "Restricción: No podrás comprar a más de 90 días"
             );
         uint futurePrice = calcularValorFuturo(date);
-        if (futureTransactions[msg.sender].length == 0) {
-            futureSenders.push(msg.sender);
-        }
-        futureTransactions[msg.sender].push(FutureTransaction(futurePrice, amount, date, false));
+        futures.push(FutureTransaction(futurePrice, amount, date, false, msg.sender));
     }
 
-    function consultarMisComprasFuturas() public view returns (FutureTransaction[] memory) {
+    function consultarMisComprasFuturas() public returns (FutureTransaction[] memory) {
         return getFutureTransactionsBySender(msg.sender);
     }
 
-    function consultarTodasLasComprasFuturas() public returns (FutureTransaction[] memory) {
-        delete allFutureTransactions;
-        for (uint index = 0; index < futureSenders.length; index++) {
-            address sender = futureSenders[index];
-            FutureTransaction[] memory futureTransactionsBySender = getFutureTransactionsBySender(sender);
-            for (uint otherIndex = 0; otherIndex < futureTransactionsBySender.length; otherIndex++) {
-                allFutureTransactions.push(futureTransactionsBySender[otherIndex]);
-            }
-        }
-        return allFutureTransactions;
+    function consultarTodasLasComprasFuturas() public view returns (FutureTransaction[] memory) {
+        return futures;
     }
 
     function ejecutarMisContratos() public {
@@ -103,9 +91,7 @@ contract TransactionsManager {
     }
 
     function ejecutarTodosLosContratos() public {
-        for (uint index = 0; index < futureSenders.length; index++) {
-            executeContractsBySender(futureSenders[index]);
-        }
+        executeAllContracts();
     }
 
 
@@ -116,28 +102,54 @@ contract TransactionsManager {
         lastTransactions.push(Transaction(now, price));
     }
 
-    function getFutureTransactionsBySender(address sender) internal view returns (FutureTransaction[] memory) {
-        FutureTransaction[] memory senderFutureTransactions = futureTransactions[sender];
-        for (uint index = 0; index < senderFutureTransactions.length; index++) {
-            if (senderFutureTransactions[index].date > now) {
-                senderFutureTransactions[index].isReady = true;
+    function getFutureTransactionsBySender(address sender) internal returns (FutureTransaction[] memory) {
+        delete senderFutureTransactions;
+        for (uint index = 0; index < futures.length; index++) {
+            if (futures[index].date < now) {
+                futures[index].isReady = true;
+            }
+            if (futures[index].owner == sender) {
+                senderFutureTransactions.push(futures[index]);
             }
         }
         return senderFutureTransactions;
     }
 
     function executeContractsBySender(address payable sender) internal {
-        delete notReadyTransactions;
-        FutureTransaction[] memory futureTransactionsBySender = getFutureTransactionsBySender(sender);
-        for (uint index = 0; index < futureTransactionsBySender.length; index++) {
-            FutureTransaction memory futureTransaction = futureTransactionsBySender[index];
-            if (futureTransaction.isReady) {
-                sender.transfer(futureTransaction.amount);
-            } else {
-                notReadyTransactions.push(futureTransaction);
+        delete futuresIndexToDelete;
+        for (uint index = 0; index < futures.length; index++) {
+            if (futures[index].owner == msg.sender) {
+                if (futures[index].date < now) {
+                    sender.transfer(futures[index].amount);
+                    futuresIndexToDelete.push(index);
+                }
             }
         }
-        futureTransactions[sender] = notReadyTransactions;
+        for (uint index = 0; index < futuresIndexToDelete.length; index++) {
+            remove(futuresIndexToDelete[index]);
+        }
     }
 
+    function executeAllContracts() internal {
+        delete futuresIndexToDelete;
+        for (uint index = 0; index < futures.length; index++) {
+            if (futures[index].date < now) {
+                futures[index].owner.transfer(futures[index].amount);
+                futuresIndexToDelete.push(index);
+            }
+        }
+        for (uint index = 0; index < futuresIndexToDelete.length; index++) {
+            remove(futuresIndexToDelete[index]);
+        }
+    }
+
+    function remove(uint index)  internal {
+        if (index >= futures.length) return;
+
+        for (uint i = index; i<futures.length-1; i++){
+            futures[i] = futures[i+1];
+        }
+        delete futures[futures.length-1];
+        futures.length--;
+    }
 }

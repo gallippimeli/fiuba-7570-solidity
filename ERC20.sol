@@ -4,6 +4,8 @@ import './IERC20.sol';
 import './SafeMath.sol';
 import './TransactionsManager.sol';
 
+pragma experimental ABIEncoderV2;
+
 contract ERC20 is IERC20, TransactionsManager {
     using SafeMath for uint256;
 
