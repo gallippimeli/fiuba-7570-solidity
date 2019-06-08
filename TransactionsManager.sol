@@ -28,6 +28,8 @@ contract TransactionsManager {
 
     FutureTransaction[] public futures;
 
+    mapping (address => uint) ownerFuturesCount;
+
     uint[] futuresIndexToDelete;
 
     FutureTransaction[] senderFutureTransactions;
@@ -104,12 +106,14 @@ contract TransactionsManager {
 
     function getFutureTransactionsBySender(address sender) internal returns (FutureTransaction[] memory) {
         delete senderFutureTransactions;
-        for (uint index = 0; index < futures.length; index++) {
-            if (futures[index].date < now) {
-                futures[index].isReady = true;
-            }
-            if (futures[index].owner == sender) {
-                senderFutureTransactions.push(futures[index]);
+        if (ownerFuturesCount[sender] > 0) {
+            for (uint index = 0; index < futures.length; index++) {
+                if (futures[index].date < now) {
+                    futures[index].isReady = true;
+                }
+                if (futures[index].owner == sender) {
+                    senderFutureTransactions.push(futures[index]);
+                }
             }
         }
         return senderFutureTransactions;
