@@ -27,7 +27,7 @@ contract ERC20 is IERC20, TransactionsManager {
 
     uint256 private _totalSupply = 2000;
 
-    uint private _price = 100;
+    uint private _price = 10;
 
     /**
      * Implemented IERC20 functions
@@ -64,10 +64,6 @@ contract ERC20 is IERC20, TransactionsManager {
      * Additional functions
      */
     function buyCoins(uint amount) public payable {
-        require(
-            amount.mul(_price) == msg.value,
-            'No puedes comprar monedas'
-        );
         require(
             transfer(msg.sender, amount),
             'No puedes comprar monedas'
